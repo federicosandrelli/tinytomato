@@ -2,12 +2,12 @@
 import PackageDescription
 
 let package = Package(
-    name: "PomodoroBar",
+    name: "tinytomato",
     platforms: [.macOS(.v12)],
     targets: [
         .executableTarget(
-            name: "PomodoroBar",
-            path: "Sources/PomodoroBar"
+            name: "tinytomato",
+            path: "Sources/tinytomato"
         )
     ]
 )
