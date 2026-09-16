@@ -5,29 +5,6 @@ enum Phase: String {
     case rest = "Rest"
 }
 
-func tomatoImage(color: NSColor) -> NSImage {
-    let size = NSSize(width: 16, height: 16)
-    let image = NSImage(size: size)
-    image.lockFocus()
-
-    let body = NSBezierPath(ovalIn: NSRect(x: 1, y: 0, width: 14, height: 13))
-    color.setFill()
-    body.fill()
-
-    let leaf = NSBezierPath()
-    leaf.move(to: NSPoint(x: 8, y: 13))
-    leaf.line(to: NSPoint(x: 5, y: 16))
-    leaf.line(to: NSPoint(x: 8, y: 14.5))
-    leaf.line(to: NSPoint(x: 11, y: 16))
-    leaf.close()
-    NSColor.systemGreen.setFill()
-    leaf.fill()
-
-    image.unlockFocus()
-    image.isTemplate = false
-    return image
-}
-
 final class AppDelegate: NSObject, NSApplicationDelegate {
     let workDuration: TimeInterval = 25 * 60
     let restDuration: TimeInterval = 5 * 60
@@ -40,9 +17,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     var startPauseItem: NSMenuItem!
     var resetItem: NSMenuItem!
-
-    let workColor = NSColor(calibratedRed: 0.90, green: 0.20, blue: 0.16, alpha: 1.0)
-    var restColor = NSColor(calibratedRed: 0.298, green: 0.686, blue: 0.314, alpha: 1.0)
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)
@@ -120,9 +94,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func updateTitle() {
         let minutes = Int(remaining) / 60
         let seconds = Int(remaining) % 60
-        statusItem.button?.image = tomatoImage(color: phase == .work ? workColor : restColor)
-        statusItem.button?.imagePosition = .imageLeading
-        statusItem.button?.title = String(format: "%02d:%02d", minutes, seconds)
+        let icon = phase == .work ? "🍅" : "☕"
+        statusItem.button?.title = String(format: "%@ %02d:%02d", icon, minutes, seconds)
     }
 
     func notify() {
