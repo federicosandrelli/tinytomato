@@ -25,6 +25,13 @@ enum Phase {
         }
     }
 
+    var startBeepCount: Int {
+        switch self {
+        case .work: return 2
+        case .rest: return 1
+        }
+    }
+
     var notificationTitle: String {
         switch self {
         case .work: return "Time to focus"
@@ -43,11 +50,13 @@ enum Phase {
 final class AppDelegate: NSObject, NSApplicationDelegate {
     private var statusItem: NSStatusItem!
     private var startPauseItem: NSMenuItem!
+    private var soundItem: NSMenuItem!
     private var timer: Timer?
 
     private var phase: Phase = .work
     private var remaining: TimeInterval = Phase.work.duration
     private var running = false
+    private var soundEnabled = true
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)
@@ -69,6 +78,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let skipItem = NSMenuItem(title: "Skip to next phase", action: #selector(skipPhase), keyEquivalent: "")
         skipItem.target = self
 
+        soundItem = NSMenuItem(title: "", action: #selector(toggleSound), keyEquivalent: "")
+        soundItem.target = self
+        updateSoundItemTitle()
+
         let quitItem = NSMenuItem(title: "Quit", action: #selector(quit), keyEquivalent: "q")
         quitItem.target = self
 
@@ -76,6 +89,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         menu.addItem(startPauseItem)
         menu.addItem(resetItem)
         menu.addItem(skipItem)
+        menu.addItem(.separator())
+        menu.addItem(soundItem)
         menu.addItem(.separator())
         menu.addItem(quitItem)
         return menu
@@ -108,6 +123,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         advancePhase()
     }
 
+    @objc private func toggleSound() {
+        soundEnabled.toggle()
+        updateSoundItemTitle()
+    }
+
     @objc private func quit() {
         NSApp.terminate(nil)
     }
@@ -126,6 +146,33 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         phase = phase.next
         remaining = phase.duration
         updateTitle()
+        playStartSound()
+    }
+
+    private func playStartSound() {
+        guard soundEnabled else { return }
+        for i in 0..<phase.startBeepCount {
+            DispatchQueue.main.asyncAfter(deadline: .now() + Double(i) * 0.2) {
+                NSSound.beep()
+            }
+        }
+    }
+
+    private func updateSoundItemTitle() {
+        let paragraphStyle = NSMutableParagraphStyle()
+        paragraphStyle.tabStops = [NSTextTab(textAlignment: .right, location: 180, options: [:])]
+
+        let title = "Turn Sound On/Off\t\(soundEnabled ? "On" : "Off")"
+        let attributedTitle = NSMutableAttributedString(
+            string: title,
+            attributes: [
+                .font: NSFont.menuFont(ofSize: 0),
+                .paragraphStyle: paragraphStyle,
+            ]
+        )
+        let stateRange = (title as NSString).range(of: soundEnabled ? "On" : "Off", options: .backwards)
+        attributedTitle.addAttribute(.foregroundColor, value: NSColor.secondaryLabelColor, range: stateRange)
+        soundItem.attributedTitle = attributedTitle
     }
 
     private func updateTitle() {
